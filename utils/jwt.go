@@ -11,8 +11,6 @@ import (
 const secretKey = "supersecret"
 
 func GenerateToken(email string, userId *uint) (string, error) {
-	//SigningMethodHS256 typ HMAC sprawdzany poniżej
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"email":  email,
 		"userId": userId,
@@ -24,7 +22,6 @@ func GenerateToken(email string, userId *uint) (string, error) {
 
 func VerifyToken(token string) (*uint, error) {
 	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
-		//Sprawdzamy czy token jest takiego typu
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
 
 		if !ok {
@@ -50,10 +47,11 @@ func VerifyToken(token string) (*uint, error) {
 		return nil, errors.New("Invalid token claims")
 	}
 
-	//te nawiasy na końcu to type check
+	//Nawiasy na końcu to type check
 	//email := claims["email"].(string)
 
-	var test1 float64 = claims["userId"].(float64)
-	userId := uint(test1)
+	var id float64 = claims["userId"].(float64)
+	userId := uint(id)
+
 	return &userId, nil
 }

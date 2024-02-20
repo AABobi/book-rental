@@ -2,7 +2,7 @@ package data
 
 import (
 	"book-rental/utils"
-	"fmt"
+	"errors"
 
 	"gorm.io/gorm"
 )
@@ -14,15 +14,16 @@ type User struct {
 	Books    []Book `json:"books"`
 }
 
-func CreateNewUser(db *gorm.DB, user *User) {
+func CreateNewUser(db *gorm.DB, user *User) error {
 	var userExist []User
 	db.Where("email = ?", user.Email).Find(&userExist)
 
 	if len(userExist) != 0 {
-		fmt.Println("tutaj obsługa")
-		return
+		return errors.New("User exist")
 	}
 	db.Create(&user)
+
+	return nil
 }
 
 func (u *User) CheckCredentials(db *gorm.DB) bool {

@@ -10,3 +10,6 @@ For routing this up use CHI
 
 github.com/golang-jwt/jwt/v5
 "golang.org/x/crypto/bcrypt"
+
+
+ go get github.com/stretchr/testify/assert

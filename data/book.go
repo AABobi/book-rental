@@ -1,6 +1,7 @@
 package data
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -8,13 +9,17 @@ import (
 )
 
 type Book struct {
-	BookID       uint       `json:"book_id" gorm:"primaryKey;autoIncrement;not null"`
-	Name         string     `json:"name" gorm:"not null;not null"`
-	DateToReturn *time.Time `json:"date_to_return"`
-	UserID       *uint      `json:"user_id" gorm:"foreignKey:UserID"`
+	BookID          uint       `json:"book_id" gorm:"primaryKey;autoIncrement;not null"`
+	Name            string     `json:"name" gorm:"not null"`
+	DateToReturn    *time.Time `json:"date_to_return"`
+	UserID          uint       `json:"user_id" gorm:"foreignKey:UserID"`
+	ShippingAddress string     `json:"shipping_address"`
 }
 
+// in progress
+// sent
 func FindBooks(db *gorm.DB, condition string) []Book {
+	fmt.Println("TESTU KURW")
 	var books []Book
 	db.Where(condition).Find(&books)
 	return books
@@ -22,28 +27,98 @@ func FindBooks(db *gorm.DB, condition string) []Book {
 
 func FindAllBooks(db *gorm.DB, books *[]Book) {
 	db.Find(&books)
-	//return books
 }
 
-func (b *Book) RentBook(db *gorm.DB, userId *uint) {
-	db.Where("book_id = ?", b.BookID).First(&b)
-	currentTime := time.Now()
+func GetRentedBooksFromDb(db *gorm.DB, userId *uint, books *[]Book) {
+	db.Where("user_id = ?", *userId).Find(&books)
+}
 
-	// Add 2 weeks to the current time
+func RentBook(db *gorm.DB, userId *uint, books []Book) error {
+	tx := db.Begin()
+
+	if tx.Error != nil {
+		return tx.Error
+	}
+	currentTime := time.Now()
 	twoWeeksLater := currentTime.Add(2 * 7 * 24 * time.Hour)
 
-	//b.DateToReturn = &twoWeeksLater
+	for _, book := range books {
+		shippingAddress := book.ShippingAddress
+		fmt.Println(shippingAddress)
+		err := tx.Where("name = ?", book.Name).First(&book).Error
+		if err != nil {
+			errorHandler("User", err, tx)
+		}
 
-	if err := db.Model(&b).Update("date_to_return", twoWeeksLater).Error; err != nil {
-		panic("Failed to update user")
+		updateBook(tx, &twoWeeksLater, *userId, shippingAddress, book)
+
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
 	}
 
-	b.UserID = userId
-	fmt.Printf("user id in book %v and thje vaue %v", b.UserID, *userId)
-	//b.BookID = 1
-	if err := db.Model(&b).Update("user_id", *userId).Error; err != nil {
-		panic("Failed to update user")
-	}
-	fmt.Println("User updated successfully:", b)
+	tx.Commit()
+	return nil
+}
 
+func RemoveUserIdFromBooks(db *gorm.DB, userId uint, books *[]Book) error {
+	var date *time.Time = nil
+	address := ""
+	var id uint = 0
+
+	tx := db.Begin()
+
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	for _, book := range *books {
+		bookName := book.Name
+		err := tx.Where("user_id = ?", userId).Where("name = ?", bookName).First(&book).Error
+
+		if err != nil {
+			errorHandler("User", err, tx)
+		}
+
+		err = updateBook(tx, date, id, address, book)
+
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+	tx.Commit()
+	return nil
+}
+
+func updateBook(tx *gorm.DB, date *time.Time, userId uint, shippingAddress string, book Book) error {
+	err := tx.Model(&book).Update("date_to_return", date).Error
+
+	if err != nil {
+		return err
+	}
+
+	err = tx.Model(&book).Update("user_id", userId).Error
+	if err != nil {
+		return err
+	}
+
+	err = tx.Model(&book).Update("shipping_address", shippingAddress).Error
+	if err != nil {
+		return err
+	}
+	tx.Commit()
+	return nil
+}
+
+func errorHandler(wantedRecord string, err error, tx *gorm.DB) error {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		fmt.Printf("%s not found.", wantedRecord)
+	} else {
+		fmt.Println("Error:", err)
+	}
+
+	tx.Rollback()
+	return err
 }

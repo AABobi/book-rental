@@ -1,36 +1,39 @@
-package db
+package main
 
 import (
 	"book-rental/data"
+	"book-rental/db"
 	"fmt"
 	"os"
+	"path/filepath"
+	"testing"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
-var DB *gorm.DB
+func TestMain(m *testing.M) {
+	var err error
 
-func InitGDB() {
-	dbName := "api2.db"
-
-	_, err := os.Stat(dbName)
-
-	if !os.IsNotExist(err) {
-		fmt.Printf("Database file %s exists\n", dbName)
-	} else {
-		db, err := gorm.Open(sqlite.Open(dbName), &gorm.Config{})
-		if err != nil {
-			panic("failed to connect database")
-		}
-		fmt.Printf("Database file %s does not exist\n", dbName)
-		user, books := testDataForDb()
-		DB = db
-
-		// Migrate the schema
-		db.AutoMigrate(&data.User{}, &data.Book{})
-		fillDb(db, user, books)
+	rootDir := filepath.Join(".", "..", "..")
+	if err != nil {
+		panic("failed to get current working directory")
 	}
+
+	dbName := filepath.Join(rootDir, "api22222.db")
+	os.Remove(dbName)
+
+	db.DB, err = gorm.Open(sqlite.Open(dbName), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
+	}
+	user, books := testDataForDb()
+	db.DB.AutoMigrate(&data.User{}, &data.Book{})
+	fillDb(db.DB, user, books)
+
+	//	db.DB.Create(&books)
+
+	os.Exit(m.Run())
 }
 
 func fillDb(db *gorm.DB, user data.User, books []data.Book) {
