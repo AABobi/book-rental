@@ -3,6 +3,7 @@ package data
 import (
 	"book-rental/utils"
 	"errors"
+	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -30,6 +31,9 @@ func (u *User) CheckCredentials(db *gorm.DB) bool {
 	var user User
 	db.Where("email = ?", u.Email).Find(&user)
 
+	fmt.Println("Password")
+	fmt.Println(u.Password)
+	fmt.Println(user.Password)
 	return utils.CheckPasswordHash(u.Password, user.Password)
 }
 

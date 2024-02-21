@@ -29,14 +29,12 @@ func routes() http.Handler {
 
 	mux.With(middlewares.Authorization).Get("/get", handlers.GetUsers)
 
-	mux.Get("/", handlers.HelloWord)
 	mux.Post("/signup", handlers.CreateNewUser)
-	mux.Get("/login", handlers.Login)
+	mux.Post("/login", handlers.Login)
 	mux.With(middlewares.Authorization).Get("/get-rented-books", handlers.GetRentedBooks)
 	mux.With(middlewares.Authorization).Post("/rent", handlers.RentBook)
 	mux.With(middlewares.Authorization).Get("/get-available-books", handlers.GetAvailableBooks)
-	mux.With(middlewares.Authorization).Post("/return-books", handlers.ReturningTheBook)
-	mux.Get("/get-available-books2", handlers.GetAvailableBooks)
+	mux.With(middlewares.Authorization).Post("/return-books", handlers.ReturnTheBook)
 
 	return mux
 }

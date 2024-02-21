@@ -8,6 +8,10 @@ import (
 )
 
 func Authorization(next http.Handler) http.Handler {
+	return handler(next)
+}
+
+var handler = func(n http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := r.Header.Get("Authorization")
 		if token == "" {
@@ -24,6 +28,6 @@ func Authorization(next http.Handler) http.Handler {
 		ctx := context.Background()
 		ctx = context.WithValue(ctx, "myKey", userId)
 
-		next.ServeHTTP(w, r.WithContext(ctx))
+		n.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

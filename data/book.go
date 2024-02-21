@@ -19,7 +19,6 @@ type Book struct {
 // in progress
 // sent
 func FindBooks(db *gorm.DB, condition string) []Book {
-	fmt.Println("TESTU KURW")
 	var books []Book
 	db.Where(condition).Find(&books)
 	return books
@@ -44,7 +43,6 @@ func RentBook(db *gorm.DB, userId *uint, books []Book) error {
 
 	for _, book := range books {
 		shippingAddress := book.ShippingAddress
-		fmt.Println(shippingAddress)
 		err := tx.Where("name = ?", book.Name).First(&book).Error
 		if err != nil {
 			errorHandler("User", err, tx)
