@@ -3,7 +3,6 @@ package data
 import (
 	"book-rental/utils"
 	"errors"
-	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -18,7 +17,6 @@ type User struct {
 func CreateNewUser(db *gorm.DB, user *User) error {
 	var userExist []User
 	db.Where("email = ?", user.Email).Find(&userExist)
-
 	if len(userExist) != 0 {
 		return errors.New("User exist")
 	}
@@ -30,10 +28,6 @@ func CreateNewUser(db *gorm.DB, user *User) error {
 func (u *User) CheckCredentials(db *gorm.DB) bool {
 	var user User
 	db.Where("email = ?", u.Email).Find(&user)
-
-	fmt.Println("Password")
-	fmt.Println(u.Password)
-	fmt.Println(user.Password)
 	return utils.CheckPasswordHash(u.Password, user.Password)
 }
 

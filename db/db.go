@@ -14,25 +14,17 @@ var DB *gorm.DB
 func InitGDB() {
 	dbName := "api2.db"
 
-	os.Stat(dbName)
+	_, existFileErr := os.Stat(dbName)
 	db, err := gorm.Open(sqlite.Open(dbName), &gorm.Config{})
+
 	if err != nil {
 		panic("failed to connect database")
 	}
-	fmt.Printf("Database file %s does not exist\n", dbName)
-	user, books := testDataForDb()
-	// Migrate the schema
-	db.AutoMigrate(&data.User{}, &data.Book{})
-	fillDb(db, user, books)
-	if !os.IsNotExist(err) {
+
+	if !os.IsNotExist(existFileErr) {
 		fmt.Printf("Database file %s exists\n", dbName)
 	} else {
-		if err != nil {
-			panic("failed to connect database")
-		}
-		fmt.Printf("Database file %s does not exist\n", dbName)
 		user, books := testDataForDb()
-		// Migrate the schema
 		db.AutoMigrate(&data.User{}, &data.Book{})
 		fillDb(db, user, books)
 	}

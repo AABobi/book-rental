@@ -26,16 +26,25 @@ func CreateNewUser(w http.ResponseWriter, r *http.Request) {
 
 	err := helpers.ReadJSON(w, r, &user)
 
-	errorHandler("Failed to read json", http.StatusInternalServerError, err, w)
+	if err != nil {
+		http.Error(w, "Failed to read json", http.StatusInternalServerError)
+		return
+	}
 
 	hashedPassword, err := utils.HashPassword(user.Password)
 
-	errorHandler("Hash error", http.StatusInternalServerError, err, w)
+	if err != nil {
+		http.Error(w, "Hash error", http.StatusInternalServerError)
+		return
+	}
 
 	user.Password = hashedPassword
 	err = data.CreateNewUser(db.DB, &user)
 
-	errorHandler("User exist", http.StatusInternalServerError, err, w)
+	if err != nil {
+		http.Error(w, "User exist", http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 
@@ -43,7 +52,10 @@ func CreateNewUser(w http.ResponseWriter, r *http.Request) {
 
 	_, err = fmt.Fprintln(w, message)
 
-	errorHandler("Failed to write response", http.StatusInternalServerError, err, w)
+	if err != nil {
+		http.Error(w, "Failed to write response", http.StatusInternalServerError)
+		return
+	}
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +63,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	err := helpers.ReadJSON(w, r, &user)
 
-	errorHandler("Failed to read json", http.StatusInternalServerError, err, w)
+	if err != nil {
+		http.Error(w, "Failed to read json", http.StatusInternalServerError)
+		return
+	}
 
 	passwordCorrect := user.CheckCredentials(db.DB)
 
@@ -64,7 +79,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	token, err := utils.GenerateToken(user.Email, &userId)
 
-	errorHandler("Generate token problem", http.StatusInternalServerError, err, w)
+	if err != nil {
+		http.Error(w, "Generate token problem", http.StatusInternalServerError)
+		return
+	}
 
 	response := AuthResponse{
 		Email: user.Email,
@@ -93,7 +111,10 @@ func GetRentedBooks(w http.ResponseWriter, r *http.Request) {
 
 	err := helpers.WriteJSON(w, 200, books)
 
-	errorHandler("Cannot rent a book", http.StatusInternalServerError, err, w)
+	if err != nil {
+		http.Error(w, "Cannot rent a book", http.StatusInternalServerError)
+		return
+	}
 }
 
 func RentBook(w http.ResponseWriter, r *http.Request) {
@@ -107,13 +128,19 @@ func RentBook(w http.ResponseWriter, r *http.Request) {
 
 	err := data.RentBook(db.DB, userId, books)
 
-	errorHandler("Failed to rent a book", http.StatusInternalServerError, err, w)
+	if err != nil {
+		http.Error(w, "Failed to rent a book", http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 
 	_, err = fmt.Fprint(w, "The rental has been made correctly")
 
-	errorHandler("Failed to write response", http.StatusInternalServerError, err, w)
+	if err != nil {
+		http.Error(w, "Failed to write response", http.StatusInternalServerError)
+		return
+	}
 }
 
 func GetAllBooks(w http.ResponseWriter, r *http.Request) {
@@ -134,7 +161,10 @@ func ReturnTheBook(w http.ResponseWriter, r *http.Request) {
 	}
 	err := data.RemoveUserIdFromBooks(db.DB, *userId, &books)
 
-	errorHandler("The book cannot be updated", http.StatusInternalServerError, err, w)
+	if err != nil {
+		http.Error(w, "The book cannot be updated", http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 
@@ -142,21 +172,13 @@ func ReturnTheBook(w http.ResponseWriter, r *http.Request) {
 
 	_, err = fmt.Fprintln(w, message)
 
-	errorHandler("Failed to write response", http.StatusInternalServerError, err, w)
+	if err != nil {
+		http.Error(w, "Failed to write response", http.StatusInternalServerError)
+		return
+	}
 }
 
 var userIdFromContext = func(key string, r *http.Request) (*uint, bool) {
 	userId, ok := r.Context().Value("myKey").(*uint)
 	return userId, ok
-}
-
-func errorHandler(message string, status int, err error, w http.ResponseWriter) {
-	fmt.Println("ERROR")
-	if err != nil {
-		fmt.Println("ERROR")
-		http.Error(w, "Failed to read json", http.StatusInternalServerError)
-		fmt.Println("ERROR")
-		return
-	}
-	fmt.Println("ERROR")
 }

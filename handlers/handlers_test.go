@@ -22,7 +22,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestCreateNewUser(t *testing.T) {
-	fmt.Println("!")
 	newUser := data.User{
 		Email:    "test@gmail.com",
 		Password: "pass",
@@ -30,6 +29,7 @@ func TestCreateNewUser(t *testing.T) {
 	jsonString, _ := json.Marshal(newUser)
 
 	reader := bytes.NewReader(jsonString)
+
 	req := httptest.NewRequest(http.MethodPost, "/signup", reader)
 
 	record := httptest.NewRecorder()
@@ -47,13 +47,13 @@ func TestCreateNewUser(t *testing.T) {
 	}
 
 	want := "Success: User created\n"
+	//	fmt.Println(string(body))
 	if string(body) != want {
 		t.Errorf("Cannot create a user \n %v", string(body))
 	}
 }
 
 func TestCreateNewUser_userExistInDB(t *testing.T) {
-	fmt.Println("!!")
 	newUser := data.User{
 		Email:    "test@gmail.com",
 		Password: "pass",
@@ -103,20 +103,20 @@ func TestLogin(t *testing.T) {
 
 	defer resp.Body.Close()
 
-	_, err := io.ReadAll(resp.Body)
+	response, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	var loginResponse LoginResponse
-	err = json.Unmarshal([]byte(jsonString), &loginResponse)
+	err = json.Unmarshal([]byte(response), &loginResponse)
 
 	if err != nil {
 		t.Errorf("Login test failed")
 	}
 
-	if loginResponse.Email == newUser.Email && loginResponse.Token != "" {
+	if !(loginResponse.Email == newUser.Email) && !(loginResponse.Token != "") {
 		t.Errorf("Login test failed")
 	}
 }
